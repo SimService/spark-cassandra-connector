@@ -69,7 +69,7 @@ class CassandraTableScanRDD[R] private[connector](
     val limit: Option[CassandraLimit] = None,
     val clusteringOrder: Option[ClusteringOrder] = None,
     val readConf: ReadConf = ReadConf(),
-    overridePartitioner: Option[Partitioner] = None)(
+    overridePartitioner: Option[Partitioner] = None, val simDistinct: Boolean = false)(
   implicit
     val classTag: ClassTag[R],
     @transient val rowReaderFactory: RowReaderFactory[R])
@@ -85,7 +85,7 @@ class CassandraTableScanRDD[R] private[connector](
     limit: Option[CassandraLimit] = limit,
     clusteringOrder: Option[ClusteringOrder] = None,
     readConf: ReadConf = readConf,
-    connector: CassandraConnector = connector): Self = {
+    connector: CassandraConnector = connector, simDistinct: Boolean = simDistinct): Self = {
 
     require(sc != null,
       "RDD transformation requires a non-null SparkContext. " +
@@ -104,7 +104,8 @@ class CassandraTableScanRDD[R] private[connector](
       limit = limit,
       clusteringOrder = clusteringOrder,
       readConf = readConf,
-      overridePartitioner = overridePartitioner)
+      overridePartitioner = overridePartitioner,
+      simDistinct = simDistinct)
   }
 
 
@@ -284,7 +285,7 @@ class CassandraTableScanRDD[R] private[connector](
   override def getPreferredLocations(split: Partition): Seq[String] =
     split.asInstanceOf[CassandraPartition[_, _]].endpoints.flatMap(nodeAddresses.hostNames).toSeq
 
-  private def tokenRangeToCqlQuery(range: CqlTokenRange[_, _]): (String, Seq[Any]) = {
+  def tokenRangeToCqlQuery(range: CqlTokenRange[_, _]): (String, Seq[Any]) = {
     val columns = selectedColumnRefs.map(_.cql).mkString(", ")
     val (cql, values) = if (containsPartitionKey(where)) {
       ("", Seq.empty)
@@ -297,9 +298,15 @@ class CassandraTableScanRDD[R] private[connector](
     val quotedKeyspaceName = quote(keyspaceName)
     val quotedTableName = quote(tableName)
     val queryTemplate =
+      simDistinct match  {
+      case false =>
       s"SELECT $columns " +
         s"FROM $quotedKeyspaceName.$quotedTableName " +
         s"WHERE $filter $orderBy $limitClause ALLOW FILTERING"
+      case true => s"SELECT DISTINCT $columns " +
+        s"FROM $quotedKeyspaceName.$quotedTableName " +
+        s"WHERE $filter $orderBy $limitClause ALLOW FILTERING"
+    }
     val queryParamValues = values ++ where.values
     (queryTemplate, queryParamValues)
   }

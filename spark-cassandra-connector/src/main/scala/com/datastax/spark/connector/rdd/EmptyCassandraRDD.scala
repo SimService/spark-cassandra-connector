@@ -17,7 +17,8 @@ class EmptyCassandraRDD[R : ClassTag](
     val where: CqlWhereClause = CqlWhereClause.empty,
     val limit: Option[CassandraLimit] = None,
     val clusteringOrder: Option[ClusteringOrder] = None,
-    val readConf: ReadConf = ReadConf())
+    val readConf: ReadConf = ReadConf(),
+    val simDistinct: Boolean = false)
   extends CassandraRDD[R](sc, Seq.empty) {
 
   override type Self = EmptyCassandraRDD[R]
@@ -28,7 +29,8 @@ class EmptyCassandraRDD[R : ClassTag](
       limit: Option[CassandraLimit] = limit,
       clusteringOrder: Option[ClusteringOrder] = None,
       readConf: ReadConf = readConf,
-      connector: CassandraConnector = connector) = {
+      connector: CassandraConnector = connector,
+  simDistinct: Boolean = false) = {
 
     new EmptyCassandraRDD[R](
       sc = sc,

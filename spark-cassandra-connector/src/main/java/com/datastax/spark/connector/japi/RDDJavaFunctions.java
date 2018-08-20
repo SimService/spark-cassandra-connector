@@ -129,6 +129,7 @@ public class RDDJavaFunctions<T> extends RDDAndDStreamCommonJavaFunctions<T> {
                 readConf,
                 Option.<RowReader<R>>empty(),
                 Option.<RowWriter<T>>empty(),
+		false,
                 classTagT,
                 classTagR,
                 rowWriterFactory,

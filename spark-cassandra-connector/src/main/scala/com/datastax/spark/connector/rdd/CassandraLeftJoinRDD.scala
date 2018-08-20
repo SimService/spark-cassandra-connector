@@ -31,7 +31,7 @@ class CassandraLeftJoinRDD[L, R] private[connector](
     val clusteringOrder: Option[ClusteringOrder] = None,
     val readConf: ReadConf = ReadConf(),
     manualRowReader: Option[RowReader[R]] = None,
-    override val manualRowWriter: Option[RowWriter[L]] = None)(
+    override val manualRowWriter: Option[RowWriter[L]] = None, val simDistinct: Boolean = false)(
   implicit
     val leftClassTag: ClassTag[L],
     val rightClassTag: ClassTag[R],
@@ -56,7 +56,7 @@ class CassandraLeftJoinRDD[L, R] private[connector](
     limit: Option[CassandraLimit] = limit,
     clusteringOrder: Option[ClusteringOrder] = None,
     readConf: ReadConf = readConf,
-    connector: CassandraConnector = connector
+    connector: CassandraConnector = connector, simDistinct: Boolean = simDistinct
   ): Self = {
 
     new CassandraLeftJoinRDD[L, R](
@@ -69,7 +69,7 @@ class CassandraLeftJoinRDD[L, R] private[connector](
       where = where,
       limit = limit,
       clusteringOrder = clusteringOrder,
-      readConf = readConf
+      readConf = readConf,simDistinct = simDistinct
     )
   }
 

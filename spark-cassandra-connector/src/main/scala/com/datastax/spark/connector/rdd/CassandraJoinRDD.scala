@@ -31,7 +31,8 @@ class CassandraJoinRDD[L, R] private[connector](
     val clusteringOrder: Option[ClusteringOrder] = None,
     val readConf: ReadConf = ReadConf(),
     manualRowReader: Option[RowReader[R]] = None,
-    override val manualRowWriter: Option[RowWriter[L]] = None)(
+    override val manualRowWriter: Option[RowWriter[L]] = None,
+    val simDistinct: Boolean = false)(
   implicit
     val leftClassTag: ClassTag[L],
     val rightClassTag: ClassTag[R],
@@ -56,7 +57,8 @@ class CassandraJoinRDD[L, R] private[connector](
     limit: Option[CassandraLimit] = limit,
     clusteringOrder: Option[ClusteringOrder] = None,
     readConf: ReadConf = readConf,
-    connector: CassandraConnector = connector
+    connector: CassandraConnector = connector,
+    simDistinct: Boolean = simDistinct
   ): Self = {
 
     new CassandraJoinRDD[L, R](
@@ -69,7 +71,8 @@ class CassandraJoinRDD[L, R] private[connector](
       where = where,
       limit = limit,
       clusteringOrder = clusteringOrder,
-      readConf = readConf
+      readConf = readConf,
+      simDistinct = simDistinct
     )
   }
 
@@ -96,6 +99,29 @@ class CassandraJoinRDD[L, R] private[connector](
 
     counts.map(_._2).reduce(_ + _)
   }
+
+  def cassandraKeyCount(): CassandraJoinRDD[L,Long] = {
+    columnNames match {
+      case SomeColumns(_) =>
+        logWarning("You are about to count rows but an explicit projection has been specified.")
+      case _ =>
+    }
+
+   
+      new CassandraJoinRDD[L, Long](
+        left = left,
+        connector = connector,
+        keyspaceName = keyspaceName,
+        tableName = tableName,
+        columnNames = SomeColumns(RowCountRef),
+        joinColumns = joinColumns,
+        where = where,
+        limit = limit,
+        clusteringOrder = clusteringOrder,
+        readConf = readConf
+      )
+  }
+
 
   def on(joinColumns: ColumnSelector): CassandraJoinRDD[L, R] = {
     new CassandraJoinRDD[L, R](

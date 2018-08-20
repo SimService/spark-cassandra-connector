@@ -19,7 +19,7 @@ abstract class CassandraRDD[R : ClassTag](
   extends RDD[R](sc, dep) {
 
   /** This is slightly different than Scala this.type.
-    * this.type is the unique singleton type of an object which is not compatible with other
+    * this.type is the unique singleton type of an object whmich is not compatible with other
     * instances of the same type, so returning anything other than `this` is not really possible
     * without lying to the compiler by explicit casts.
     * Here SelfType is used to return a copy of the object - a different instance of the same type */
@@ -44,6 +44,8 @@ abstract class CassandraRDD[R : ClassTag](
 
   protected def connector: CassandraConnector
 
+  protected def simDistinct: Boolean
+
   def toEmptyCassandraRDD: EmptyCassandraRDD[R]
 
   /** Counts the number of items in this RDD by selecting count(*) on Cassandra table */
@@ -56,7 +58,8 @@ abstract class CassandraRDD[R : ClassTag](
     limit: Option[CassandraLimit] = limit,
     clusteringOrder: Option[ClusteringOrder] = None,
     readConf: ReadConf = readConf,
-    connector: CassandraConnector = connector): Self
+    connector: CassandraConnector = connector,
+    simDistinct: Boolean = false): Self
 
   /** Allows to set custom read configuration, e.g. consistency level or fetch size. */
   def withReadConf(readConf: ReadConf): Self =
@@ -91,6 +94,12 @@ abstract class CassandraRDD[R : ClassTag](
   def select(columns: ColumnRef*): Self = {
     copy(columnNames = SomeColumns(narrowColumnSelection(columns): _*))
   }
+
+
+  def simDist() : Self = {
+    copy(simDistinct = true)
+  }
+
 
   /** Adds the limit clause to CQL select statement. The limit will be applied for each created
     * Spark partition. In other words, unless the data are fetched from a single Cassandra partition
