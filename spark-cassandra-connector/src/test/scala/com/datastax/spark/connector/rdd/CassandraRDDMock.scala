@@ -31,6 +31,7 @@ class CassandraRDDMock[R : ClassTag](prev: RDD[R], keyspace: String = "fake", ta
   override protected def limit: Option[CassandraLimit] = None
   override protected def clusteringOrder: Option[ClusteringOrder] = None
   override protected def connector: CassandraConnector = ???
+  override protected def simDistinct : Boolean = false
   override val selectedColumnRefs: Seq[ColumnRef] = Seq.empty
   override protected def narrowColumnSelection(columns: Seq[ColumnRef]): Seq[ColumnRef] = Seq.empty
 
@@ -46,7 +47,7 @@ class CassandraRDDMock[R : ClassTag](prev: RDD[R], keyspace: String = "fake", ta
      limit: Option[CassandraLimit],
      clusteringOrder: Option[ClusteringOrder],
      readConf: ReadConf,
-     connector: CassandraConnector) : CassandraRDDMock.this.type = this
+     connector: CassandraConnector, simDictinct : Boolean) : CassandraRDDMock.this.type = this
 
   /*** Pass through the parent RDD's Compute and partitions ***/
   @DeveloperApi
